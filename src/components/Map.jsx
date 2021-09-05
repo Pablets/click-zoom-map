@@ -6,10 +6,11 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 	let active = select(null); // sort of D3 "state"
 
 	const tooltip = React.useRef(null);
-	const gContainerRef = React.useRef();
+	const svgRef = React.useRef();
+	const provincesContainerRef = React.useRef();
+	const localidadesContainerRef = React.useRef();
 	const [tooltipContent, setTooltipContent] = React.useState(null);
 	const [provinceName, setProvinceName] = React.useState(null);
-	// const [prevGeoRef, setPrevGeoRef] = React.useState(gContainerRef);
 	const [geo, setGeo] = React.useState({path: null});
 	const [isClicked, setIsClicked] = React.useState(false);
 
@@ -36,23 +37,30 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 	}
 
 	function clicked(d, ref, geo, provs) {
-		const {path: svgPath, w, h} = geo;
+		const {path, w, h} = geo;
+		console.log('ref', ref.id);
 
 		let index = el => {
-			return [...el.target.parentElement.children].indexOf(el.target);
+			// console.log(el.target.parentElement.children);
+			// const childNodes = [...el.target.parentElement.children];
+			const filteredNode = provs.features.findIndex((node, i) => node?.id === ref.id);
+			console.log('filteredNode', filteredNode);
+			return filteredNode;
 		};
 
-		let path = svgPath;
-
-		let g = select(ref.parentElement);
+		let g = select(svgRef.current);
 
 		if (active.node() === ref) return reset(d, ref);
 		active.classed('active', false);
 		active = select(ref).classed('active', true);
 
 		let idx = index(d);
+		console.log('provs', provs.features[idx]);
 
 		let bounds = path.bounds(provs.features[idx]);
+		// let bounds = path.bounds(d.target);
+		console.log(bounds);
+		console.log('hasta aca funciona');
 
 		let dx = bounds[1][0] - bounds[0][0];
 		let dy = bounds[1][1] - bounds[0][1];
@@ -76,24 +84,8 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 		g.transition().duration(800).style('stroke-width', '1.5px').attr('transform', '');
 	}
 
-	const handleMouseOverCountry = (evt, province) => {
-		evt.stopPropagation();
-		if (province.np === provinceName) return;
-		setProvinceName(province.np);
-		tooltip.current.style.display = 'block';
-		tooltip.current.style.left = evt.pageX + 10 + 'px';
-		tooltip.current.style.top = evt.pageY + 10 + 'px';
-		setTooltipContent(renderTooltipContent(province));
-	};
-
-	const handleMouseLeaveCountry = () => {
-		if (tooltip?.current) {
-			tooltip.current.style.display = 'none';
-		}
-	};
-
 	const handleMapReset = e => {
-		select(gContainerRef).transition().duration(800).style('stroke-width', '1.5px').attr('transform', '');
+		select(provincesContainerRef).transition().duration(800).style('stroke-width', '1.5px').attr('transform', '');
 
 		// reset(e, gContainerRef);
 	};
@@ -122,14 +114,11 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 		return (
 			<>
 				<path
-					style={{fill: 'gray'}}
+					// style={{fill: 'gray'}}
+					id={feature.id}
 					className='province mesh'
 					d={geo.path(feature)}
 					ref={pathRef}
-					// onMouseOver={e => {
-					// 	handleMouseOverCountry(e, feature.properties);
-					// }}
-					// onMouseLeave={() => handleMouseLeaveCountry(feature)}
 					onClick={handleMouseClick}
 				/>
 			</>
@@ -137,38 +126,22 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 	};
 
 	const Localidades = ({feature, geo, dptos}) => {
-		const pathRef = React.useRef();
-
-		// console.log(feature);
+		const deptoRef = React.useRef();
 
 		const handleMouseClick = e => {
 			e.preventDefault();
 			e.stopPropagation();
-			console.log('localidades');
-			// clicked(e, pathRef.current, geo, dptos);
+			console.log(feature?.properties?.nd);
+			// clicked(e, deptoRef.current, geo, dptos);
 		};
 
 		const cloropeth = `rgba(0,250,255,${1 / feature?.properties?.nd?.length || 0.5})`;
 
-		return (
-			<>
-				<path
-					style={{fill: cloropeth}}
-					className='localidad mesh'
-					d={geo.path(feature)}
-					ref={pathRef}
-					// onMouseOver={e => {
-					// 	handleMouseOverCountry(e, feature.properties);
-					// }}
-					// onMouseLeave={() => handleMouseLeaveCountry(feature)}
-					onClick={handleMouseClick}
-				/>
-			</>
-		);
+		return <path style={{fill: cloropeth}} className='localidad mesh' d={geo.path(feature)} ref={deptoRef} onClick={handleMouseClick} />;
 	};
 
 	React.useEffect(() => {
-		setGeo(getGeoData(gContainerRef.current.parentElement));
+		setGeo(getGeoData(svgRef.current));
 	}, []);
 
 	return (
@@ -176,18 +149,18 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 			<div ref={tooltip} style={{position: 'absolute', display: 'none'}}>
 				<ToolTip>{tooltipContent}</ToolTip>
 			</div>
-			<svg width={width} height={height}>
+			<svg ref={svgRef} width={width} height={height}>
 				<rect className='background' onClick={handleMapReset}></rect>
-				<g ref={gContainerRef}>
-					{/* {geo?.path &&
-						dptos?.features.map(feature => {
+				{geo.path && (
+					<g ref={localidadesContainerRef}>
+						{dptos?.features.map(feature => {
 							return <Localidades key={feature.id} feature={feature} geo={geo} dptos={dptos} />;
-						})} */}
-					{geo?.path &&
-						provs?.features.map(feature => {
+						})}
+						{provs?.features.map(feature => {
 							return <Provincias key={feature.id} feature={feature} geo={geo} provs={provs} />;
 						})}
-				</g>
+					</g>
+				)}
 			</svg>
 		</div>
 	);

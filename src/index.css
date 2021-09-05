@@ -41,15 +41,6 @@ svg {
 	pointer-events: all;
 }
 
-.province {
-	/* fill: #ccc; */
-	cursor: pointer;
-}
-
-.province.active {
-	fill: orange;
-}
-
 .mesh {
 	/* fill: none; */
 	stroke: rgba(199, 199, 199, 0.5);
@@ -86,10 +77,28 @@ svg {
 	background-color: white;
 }
 
+.province {
+	fill: rgb(189, 189, 189);
+	stroke: rgb(58, 58, 58);
+	stroke-width: 0.1px;
+	cursor: pointer;
+	position: absolute;
+	z-index: 10;
+}
+
 .dptos {
 	stroke: green;
+	cursor: pointer;
+	position: absolute;
+	z-index: 5;
 }
 
 .localidad {
-	visibility: hidden;
+	stroke: white;
+}
+
+.active {
+	/* fill: none; */
+	opacity: 0;
+	stroke-width: 0.01;
 }
