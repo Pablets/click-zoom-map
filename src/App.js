@@ -1,25 +1,23 @@
-import logo from './logo.svg';
 import './App.css';
 
+import {Map} from './components/Map';
+import {useData} from './hooks/useData';
+
+const width = 600;
+const height = 800;
+
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+	const data = useData();
+
+	if (!data) {
+		return <pre>Loading...</pre>;
+	}
+
+	return (
+		<>
+			<Map data={data} width={width} height={height} />
+		</>
+	);
 }
 
 export default App;
