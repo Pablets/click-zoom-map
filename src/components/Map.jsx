@@ -1,18 +1,17 @@
 import React from 'react';
 import {geoTransverseMercator, geoPath, geoGraticule, select} from 'd3';
-import ToolTip from './ToolTip';
+// import ToolTip from './ToolTip';
 
 export const Map = ({data: {dptos, provs}, width, height}) => {
 	let active = select(null); // sort of D3 "state"
 
-	const tooltip = React.useRef(null);
-	const svgRef = React.useRef();
-	const provincesContainerRef = React.useRef();
-	const localidadesContainerRef = React.useRef();
-	const [tooltipContent, setTooltipContent] = React.useState(null);
-	const [provinceName, setProvinceName] = React.useState(null);
+	// const tooltip = React.useRef(null);
+	const gContainerRef = React.useRef();
+	// const [tooltipContent, setTooltipContent] = React.useState(null);
+	// const [provinceName, setProvinceName] = React.useState(null);
+	// const [prevGeoRef, setPrevGeoRef] = React.useState(gContainerRef);
 	const [geo, setGeo] = React.useState({path: null});
-	const [isClicked, setIsClicked] = React.useState(false);
+	// const [isClicked, setIsClicked] = React.useState(false);
 
 	function getGeoData(ref) {
 		const svg = select(ref);
@@ -37,30 +36,23 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 	}
 
 	function clicked(d, ref, geo, provs) {
-		const {path, w, h} = geo;
-		console.log('ref', ref.id);
+		const {path: svgPath, w, h} = geo;
 
 		let index = el => {
-			// console.log(el.target.parentElement.children);
-			// const childNodes = [...el.target.parentElement.children];
-			const filteredNode = provs.features.findIndex((node, i) => node?.id === ref.id);
-			console.log('filteredNode', filteredNode);
-			return filteredNode;
+			return [...el.target.parentElement.children].indexOf(el.target);
 		};
 
-		let g = select(svgRef.current);
+		let path = svgPath;
+
+		let g = select(ref.parentElement);
 
 		if (active.node() === ref) return reset(d, ref);
 		active.classed('active', false);
 		active = select(ref).classed('active', true);
 
 		let idx = index(d);
-		console.log('provs', provs.features[idx]);
 
 		let bounds = path.bounds(provs.features[idx]);
-		// let bounds = path.bounds(d.target);
-		console.log(bounds);
-		console.log('hasta aca funciona');
 
 		let dx = bounds[1][0] - bounds[0][0];
 		let dy = bounds[1][1] - bounds[0][1];
@@ -84,19 +76,35 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 		g.transition().duration(800).style('stroke-width', '1.5px').attr('transform', '');
 	}
 
+	// const handleMouseOverCountry = (evt, province) => {
+	// 	evt.stopPropagation();
+	// 	if (province.np === provinceName) return;
+	// 	setProvinceName(province.np);
+	// 	tooltip.current.style.display = 'block';
+	// 	tooltip.current.style.left = evt.pageX + 10 + 'px';
+	// 	tooltip.current.style.top = evt.pageY + 10 + 'px';
+	// 	setTooltipContent(renderTooltipContent(province));
+	// };
+
+	// const handleMouseLeaveCountry = () => {
+	// 	if (tooltip?.current) {
+	// 		tooltip.current.style.display = 'none';
+	// 	}
+	// };
+
 	const handleMapReset = e => {
-		select(provincesContainerRef).transition().duration(800).style('stroke-width', '1.5px').attr('transform', '');
+		select(gContainerRef).transition().duration(800).style('stroke-width', '1.5px').attr('transform', '');
 
 		// reset(e, gContainerRef);
 	};
 
-	const renderTooltipContent = province => {
-		return (
-			<div className='tooltip-content'>
-				<h1 className='WorldMap--tooltip--title'>{province.np}</h1>
-			</div>
-		);
-	};
+	// const renderTooltipContent = province => {
+	// 	return (
+	// 		<div className='tooltip-content'>
+	// 			<h1 className='WorldMap--tooltip--title'>{province.np}</h1>
+	// 		</div>
+	// 	);
+	// };
 
 	const Provincias = ({feature, geo, provs}) => {
 		const pathRef = React.useRef();
@@ -115,52 +123,71 @@ export const Map = ({data: {dptos, provs}, width, height}) => {
 			<>
 				<path
 					// style={{fill: 'gray'}}
-					id={feature.id}
 					className='province mesh'
 					d={geo.path(feature)}
 					ref={pathRef}
+					// onMouseOver={e => {
+					// 	handleMouseOverCountry(e, feature.properties);
+					// }}
+					// onMouseLeave={() => handleMouseLeaveCountry(feature)}
 					onClick={handleMouseClick}
 				/>
 			</>
 		);
 	};
 
-	const Localidades = ({feature, geo, dptos}) => {
-		const deptoRef = React.useRef();
+	// const Localidades = ({feature, geo, dptos}) => {
+	// 	const pathRef = React.useRef();
 
-		const handleMouseClick = e => {
-			e.preventDefault();
-			e.stopPropagation();
-			console.log(feature?.properties?.nd);
-			// clicked(e, deptoRef.current, geo, dptos);
-		};
+	// 	// console.log(feature);
 
-		const cloropeth = `rgba(0,250,255,${1 / feature?.properties?.nd?.length || 0.5})`;
+	// 	const handleMouseClick = e => {
+	// 		e.preventDefault();
+	// 		e.stopPropagation();
+	// 		console.log('localidades');
+	// 		// clicked(e, pathRef.current, geo, dptos);
+	// 	};
 
-		return <path style={{fill: cloropeth}} className='localidad mesh' d={geo.path(feature)} ref={deptoRef} onClick={handleMouseClick} />;
-	};
+	// 	const cloropeth = `rgba(0,250,255,${1 / feature?.properties?.nd?.length || 0.5})`;
+
+	// 	return (
+	// 		<>
+	// 			<path
+	// 				style={{fill: cloropeth}}
+	// 				className='localidad mesh'
+	// 				d={geo.path(feature)}
+	// 				ref={pathRef}
+	// 				// onMouseOver={e => {
+	// 				// 	handleMouseOverCountry(e, feature.properties);
+	// 				// }}
+	// 				// onMouseLeave={() => handleMouseLeaveCountry(feature)}
+	// 				onClick={handleMouseClick}
+	// 			/>
+	// 		</>
+	// 	);
+	// };
 
 	React.useEffect(() => {
-		setGeo(getGeoData(svgRef.current));
+		setGeo(getGeoData(gContainerRef.current.parentElement));
 	}, []);
 
 	return (
 		<div>
-			<div ref={tooltip} style={{position: 'absolute', display: 'none'}}>
-				<ToolTip>{tooltipContent}</ToolTip>
+			<div style={{position: 'absolute', display: 'none'}}>
+				{/* <ToolTip>{tooltipContent}</ToolTip> */}
 			</div>
-			<svg ref={svgRef} width={width} height={height}>
+			<svg width={width} height={height}>
 				<rect className='background' onClick={handleMapReset}></rect>
-				{geo.path && (
-					<g ref={localidadesContainerRef}>
-						{dptos?.features.map(feature => {
+				<g ref={gContainerRef}>
+					{/* {geo?.path &&
+						dptos?.features.map(feature => {
 							return <Localidades key={feature.id} feature={feature} geo={geo} dptos={dptos} />;
-						})}
-						{provs?.features.map(feature => {
+						})} */}
+					{geo?.path &&
+						provs?.features.map(feature => {
 							return <Provincias key={feature.id} feature={feature} geo={geo} provs={provs} />;
 						})}
-					</g>
-				)}
+				</g>
 			</svg>
 		</div>
 	);
